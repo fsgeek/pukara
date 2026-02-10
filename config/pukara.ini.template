@@ -1,0 +1,14 @@
+# Pukara gateway configuration template.
+# Copy to pukara.ini and fill in credentials.
+# NEVER check pukara.ini into version control.
+
+[arango]
+host = http://192.168.111.125:8529
+database = apacheta
+username = root
+password =
+
+[gateway]
+host = 127.0.0.1
+port = 8000
+api_key =

@@ -1,7 +1,30 @@
 [project]
 name = "pukara"
 version = "0.1.0"
-description = "Add your description here"
+description = "Fortress gateway — boundary defense for Apacheta tensor database"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "yanantin",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pukara"]
+
+[tool.uv.sources]
+yanantin = { path = "../yanantin" }
