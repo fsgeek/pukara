@@ -1,0 +1,85 @@
+name: Builder/Tester Separation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-separation:
+    name: Verify builder/tester separation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check no commit mixes src/ and tests/
+        run: |
+          FAILED=0
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.event.after }}"
+          fi
+
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "Initial push — skipping separation check."
+            exit 0
+          fi
+
+          for COMMIT in $(git rev-list "$BASE".."$HEAD"); do
+            AUTHOR=$(git log -1 --format='%ae' "$COMMIT")
+            FILES=$(git diff-tree --no-commit-id --name-only -r "$COMMIT")
+
+            TOUCHES_SRC=$(echo "$FILES" | grep -c '^src/' || true)
+            TOUCHES_TESTS=$(echo "$FILES" | grep -c '^tests/' || true)
+
+            if [ "$TOUCHES_SRC" -gt 0 ] && [ "$TOUCHES_TESTS" -gt 0 ]; then
+              SHORT=$(git rev-parse --short "$COMMIT")
+              echo "::error::Commit $SHORT ($AUTHOR) modifies both src/ and tests/ — violates builder/tester separation"
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Builder/tester separation requires that code and tests be authored"
+            echo "in separate commits by different agents."
+            exit 1
+          fi
+
+          echo "All commits respect builder/tester separation."
+
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pukara
+        uses: actions/checkout@v4
+        with:
+          path: pukara
+
+      - name: Checkout yanantin (path dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: fsgeek/yanantin
+          path: yanantin
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install dependencies
+        working-directory: pukara
+        run: uv sync --extra dev
+
+      - name: Run tests
+        working-directory: pukara
+        run: uv run pytest tests/ -v
