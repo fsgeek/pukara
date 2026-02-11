@@ -1,11 +1,15 @@
 # Pukara gateway configuration template.
 # Copy to pukara.ini and fill in credentials.
 # NEVER check pukara.ini into version control.
+#
+# Use a least-privilege user, NOT root.
+# Root should only be used for: creating databases, creating users, backups.
+# Application access uses a dedicated user with rw on its database only.
 
 [arango]
 host = http://192.168.111.125:8529
 database = apacheta
-username = root
+username = apacheta_app
 password =
 
 [gateway]
