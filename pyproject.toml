@@ -27,4 +27,4 @@ build-backend = "hatchling.build"
 packages = ["src/pukara"]
 
 [tool.uv.sources]
-yanantin = { path = "../yanantin" }
+yanantin = { path = "../yanantin", editable = true }
