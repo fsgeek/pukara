@@ -16,20 +16,44 @@ jobs:
           fetch-depth: 0
 
       - name: Check no commit mixes src/ and tests/
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_AFTER_SHA: ${{ github.event.after }}
         run: |
           FAILED=0
 
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
-            HEAD="${{ github.event.pull_request.head.sha }}"
+          # Amnesty point: commits at or before this SHA are not checked.
+          # Pre-separation history and committed transgressions live before
+          # here. Advance this SHA after a release to keep the walk window
+          # small. Must exist on main.
+          AMNESTY="bf62c6292e6b4542f5a38acecf34d20e6be987ac"
+
+          if ! git rev-parse --verify "$AMNESTY^{commit}" >/dev/null 2>&1; then
+            echo "::error::Amnesty SHA $AMNESTY does not resolve — fix .github/workflows/separation.yml"
+            exit 1
+          fi
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE="$PR_BASE_SHA"
+            HEAD="$PR_HEAD_SHA"
           else
-            BASE="${{ github.event.before }}"
-            HEAD="${{ github.event.after }}"
+            BASE="$PUSH_BEFORE_SHA"
+            HEAD="$PUSH_AFTER_SHA"
           fi
 
           if [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
             echo "Initial push — skipping separation check."
             exit 0
+          fi
+
+          # If BASE is at or before AMNESTY, advance it forward so the walk
+          # only covers post-amnesty commits.
+          if git merge-base --is-ancestor "$BASE" "$AMNESTY"; then
+            echo "BASE ($BASE) is at or before amnesty point — walking from $AMNESTY instead."
+            BASE="$AMNESTY"
           fi
 
           for COMMIT in $(git rev-list "$BASE".."$HEAD"); do

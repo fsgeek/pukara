@@ -137,6 +137,21 @@ Three things can move now without further design:
 3. **Hold on implementing registration** until the design above is
    approved and the open questions are answered.
 
+## Tests That Will Become Stale When Registration Lands
+
+When the registration design above is implemented, the following
+tests pin the *current* (pass-through) behavior and will need to be
+flipped or deleted as part of that work — don't lose them:
+
+- `tests/test_schema_map.py::test_unknown_keys_pass_through_in_obfuscate`
+- `tests/test_schema_map.py::test_unknown_keys_pass_through_in_deobfuscate`
+
+Both explicitly assert that unknown top-level keys flow through
+`SchemaMap` unchanged. The registration design *removes* that
+behavior — known-registered fields are obfuscated, unknown ones
+either fail the write or trigger a registration call, depending on
+which variant we pick. Either way these assertions become wrong.
+
 ## Related Memory
 
 - `memory/feedback_threat_model_default.md` — adversary framing
