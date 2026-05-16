@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import time
 from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -24,7 +25,7 @@ from yanantin.apacheta.interface.errors import (
 
 from pukara.auth import make_api_key_checker
 from pukara.config import PukaraConfig, load_config
-from pukara.decoder import DecoderRing
+from pukara.schema_map import SchemaMap
 from pukara.routes import meta, query, read, store
 
 logger = logging.getLogger("pukara")
@@ -33,8 +34,16 @@ audit_logger = logging.getLogger("pukara.audit")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: connect to ArangoDB. Shutdown: close connection."""
+    """Startup: connect to ArangoDB with SchemaMap. Shutdown: close connection."""
     config: PukaraConfig = app.state.config
+
+    if config.storage_key:
+        schema_map = SchemaMap(UUID(config.storage_key))
+        logger.info("Schema obfuscation: opaque")
+    else:
+        schema_map = None  # backend defaults to transparent
+        logger.info("Schema obfuscation: transparent (dev mode)")
+
     logger.info(
         "Connecting to ArangoDB at %s (database: %s)",
         config.arango_host,
@@ -45,9 +54,9 @@ async def lifespan(app: FastAPI):
         db_name=config.arango_db,
         username=config.arango_user,
         password=config.arango_password,
+        obfuscator=schema_map,
     )
     app.state.backend = backend
-    app.state.decoder = DecoderRing()
     logger.info("Pukara gateway ready")
     yield
     backend.close()

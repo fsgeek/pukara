@@ -25,6 +25,7 @@ class PukaraConfig:
     api_key: str = ""
     host: str = "127.0.0.1"
     port: int = 8000
+    storage_key: str = ""
 
 
 def load_config(config_path: Path | None = None) -> PukaraConfig:
@@ -56,6 +57,10 @@ def load_config(config_path: Path | None = None) -> PukaraConfig:
             port_str = parser.get("gateway", "port", fallback=None)
             if port_str is not None:
                 kwargs["port"] = int(port_str)
+        if parser.has_section("security"):
+            val = parser.get("security", "storage_key", fallback=None)
+            if val is not None:
+                kwargs["storage_key"] = val
 
     env_map = {
         "PUKARA_ARANGO_HOST": "arango_host",
@@ -65,6 +70,7 @@ def load_config(config_path: Path | None = None) -> PukaraConfig:
         "PUKARA_API_KEY": "api_key",
         "PUKARA_HOST": "host",
         "PUKARA_PORT": "port",
+        "PUKARA_STORAGE_KEY": "storage_key",
     }
     for env_key, config_key in env_map.items():
         val = os.getenv(env_key)

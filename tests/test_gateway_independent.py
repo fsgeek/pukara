@@ -46,7 +46,6 @@ from yanantin.apacheta.models.provenance import ProvenanceEnvelope, SourceIdenti
 from yanantin.apacheta.models.tensor import KeyClaim, StrandRecord, TensorRecord
 
 from pukara.auth import make_api_key_checker
-from pukara.decoder import DecoderRing
 from pukara.routes import meta, query, read, store
 
 
@@ -59,7 +58,6 @@ def _make_test_app(api_key: str = "") -> FastAPI:
     """Build a test app with in-memory backend and all exception handlers."""
     app = FastAPI()
     app.state.backend = InMemoryBackend()
-    app.state.decoder = DecoderRing()
 
     @app.exception_handler(ImmutabilityError)
     async def _h_immutability(req, exc):
@@ -1579,40 +1577,12 @@ class TestCompositionEdgesWithTensors:
 
 
 # ---------------------------------------------------------------------------
-# 9. Decoder ring pass-through — UUID integrity
+# 9. UUID integrity through HTTP layer
 # ---------------------------------------------------------------------------
 
 
-class TestDecoderRing:
-    """Verify the decoder ring doesn't corrupt UUIDs during pass-through."""
-
-    def test_decoder_encode_preserves_uuid(self):
-        decoder = DecoderRing()
-        original = uuid4()
-        encoded = decoder.encode(original)
-        assert encoded == original
-        assert type(encoded) is UUID
-
-    def test_decoder_decode_preserves_uuid(self):
-        decoder = DecoderRing()
-        original = uuid4()
-        decoded = decoder.decode(original)
-        assert decoded == original
-        assert type(decoded) is UUID
-
-    def test_decoder_roundtrip(self):
-        decoder = DecoderRing()
-        original = uuid4()
-        assert decoder.decode(decoder.encode(original)) == original
-        assert decoder.encode(decoder.decode(original)) == original
-
-    def test_decoder_preserves_specific_uuid_format(self):
-        """A known UUID should survive encode/decode unchanged."""
-        decoder = DecoderRing()
-        known = UUID("12345678-1234-5678-1234-567812345678")
-        assert decoder.encode(known) == known
-        assert decoder.decode(known) == known
-        assert str(decoder.encode(known)) == "12345678-1234-5678-1234-567812345678"
+class TestUUIDIntegrity:
+    """Verify UUIDs survive HTTP roundtrip through the gateway."""
 
     def test_stored_uuid_matches_returned_uuid(self, client):
         """Store a tensor, retrieve it, verify UUIDs survived the HTTP layer."""

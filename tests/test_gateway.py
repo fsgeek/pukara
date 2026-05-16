@@ -27,7 +27,6 @@ from yanantin.apacheta.models.composition import (
 from yanantin.apacheta.models.tensor import TensorRecord
 
 from pukara.auth import make_api_key_checker
-from pukara.decoder import DecoderRing
 from pukara.routes import meta, query, read, store
 
 
@@ -36,7 +35,6 @@ def _make_test_app() -> FastAPI:
     app = FastAPI()
     backend = InMemoryBackend()
     app.state.backend = backend
-    app.state.decoder = DecoderRing()
 
     @app.exception_handler(ImmutabilityError)
     async def immutability_handler(request, exc):
@@ -179,7 +177,6 @@ class TestAuth:
     def test_key_required_when_configured(self):
         app = FastAPI()
         app.state.backend = InMemoryBackend()
-        app.state.decoder = DecoderRing()
         check_key = make_api_key_checker("secret-key-123")
         app.include_router(meta.router, dependencies=[Depends(check_key)])
 
