@@ -158,6 +158,21 @@ class SchemaMap:
             self._register_field(semantic)
         return self._field_cache[semantic]
 
+    def field_path(self, parts: tuple[str, ...]) -> str:
+        """Translate a nested field path to its storage-layer dotted form.
+
+        AQL uses ``.`` to traverse nested documents (``provenance.timestamp``),
+        so the separator is structural and never obfuscated. Each part is
+        mapped individually through ``field_name`` and then joined.
+
+        In transparent mode, this is just ``".".join(parts)``. In opaque
+        mode, every segment is obfuscated, including segments not yet in
+        the cache (``field_name`` registers them on demand).
+        """
+        if self._mode == "transparent":
+            return ".".join(parts)
+        return ".".join(self.field_name(p) for p in parts)
+
     def reverse_field(self, opaque: str) -> str:
         """Reverse lookup from opaque to semantic field name.
 
