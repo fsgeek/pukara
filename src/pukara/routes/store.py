@@ -9,7 +9,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from yanantin.apacheta.interface.abstract import ApachetaInterface
-from yanantin.apacheta.models.composition import (
+
+from tiksi.composition import (
     BootstrapRecord,
     CompositionEdge,
     CorrectionRecord,
@@ -17,8 +18,8 @@ from yanantin.apacheta.models.composition import (
     NegationRecord,
     SchemaEvolutionRecord,
 )
-from yanantin.apacheta.models.entities import EntityResolution
-from yanantin.apacheta.models.tensor import TensorRecord
+from tiksi.entities import EntityResolution
+from tiksi.tensor import TensorRecord
 
 from pukara.deps import get_backend
 

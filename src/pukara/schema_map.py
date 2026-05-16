@@ -44,7 +44,8 @@ def _collect_model_field_names() -> set[str]:
     in both Apacheta and Activity gets registered.
     """
     from yanantin.activity.models import AnchorCursor, FactRecord, MemoryAnchor
-    from yanantin.apacheta.models.composition import (
+
+    from tiksi.composition import (
         BootstrapRecord,
         CompositionEdge,
         CorrectionRecord,
@@ -52,10 +53,10 @@ def _collect_model_field_names() -> set[str]:
         NegationRecord,
         SchemaEvolutionRecord,
     )
-    from yanantin.apacheta.models.entities import EntityResolution
-    from yanantin.apacheta.models.epistemics import DeclaredLoss, EpistemicMetadata
-    from yanantin.apacheta.models.provenance import ProvenanceEnvelope, SourceIdentifier
-    from yanantin.apacheta.models.tensor import KeyClaim, StrandRecord, TensorRecord
+    from tiksi.entities import EntityResolution
+    from tiksi.epistemics import DeclaredLoss, EpistemicMetadata
+    from tiksi.provenance import ProvenanceEnvelope, SourceIdentifier
+    from tiksi.tensor import KeyClaim, StrandRecord, TensorRecord
 
     names: set[str] = set()
     for model in (
