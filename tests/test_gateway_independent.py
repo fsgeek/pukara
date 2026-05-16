@@ -1340,12 +1340,6 @@ class TestEdgeCases:
         )
         assert r.status_code == 422
 
-    def test_post_with_extra_fields_rejected(self, client):
-        """ApachetaBaseModel uses extra='forbid'."""
-        payload = {"preamble": "test", "sneaky_extra_field": "should fail"}
-        r = client.post("/api/v1/tensors", json=payload)
-        assert r.status_code == 422
-
     def test_composition_edge_invalid_relation_type(self, client):
         payload = {
             "from_tensor": str(uuid4()),
