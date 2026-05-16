@@ -18,9 +18,9 @@ _CONFIG_FILE = Path(__file__).resolve().parent.parent.parent / "config" / "pukar
 class PukaraConfig:
     """Gateway configuration. Immutable once loaded."""
 
-    arango_host: str = "http://192.168.111.125:8529"
+    arango_host: str = "http://localhost:8529"
     arango_db: str = "apacheta"
-    arango_user: str = "root"
+    arango_user: str = "apacheta_app"
     arango_password: str = ""
     api_key: str = ""
     host: str = "127.0.0.1"
