@@ -26,7 +26,7 @@ from yanantin.apacheta.interface.errors import (
 from pukara.auth import make_api_key_checker
 from pukara.config import PukaraConfig, load_config
 from pukara.schema_map import SchemaMap
-from pukara.routes import meta, query, read, store
+from pukara.routes import llika, meta, query, read, store
 
 logger = logging.getLogger("pukara")
 audit_logger = logging.getLogger("pukara.audit")
@@ -134,5 +134,6 @@ def create_app(config: PukaraConfig | None = None) -> FastAPI:
     app.include_router(store.router, dependencies=[Depends(check_key)])
     app.include_router(read.router, dependencies=[Depends(check_key)])
     app.include_router(query.router, dependencies=[Depends(check_key)])
+    app.include_router(llika.router, dependencies=[Depends(check_key)])
 
     return app
