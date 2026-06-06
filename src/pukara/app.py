@@ -49,13 +49,25 @@ async def lifespan(app: FastAPI):
         config.arango_host,
         config.arango_db,
     )
-    backend = ArangoDBBackend(
-        host=config.arango_host,
-        db_name=config.arango_db,
-        username=config.arango_user,
-        password=config.arango_password,
-        obfuscator=schema_map,
-    )
+    try:
+        backend = ArangoDBBackend(
+            host=config.arango_host,
+            db_name=config.arango_db,
+            username=config.arango_user,
+            password=config.arango_password,
+            obfuscator=schema_map,
+        )
+    except ConnectionError as exc:
+        # Yanantin discriminates the failure (auth / unreachable /
+        # not-provisioned) into ConnectionError subclasses with honest
+        # remediation in the message. Fail-stop stays — we re-raise — but
+        # we make the diagnosis visible at the boundary first instead of
+        # letting it die in an anonymous traceback. Pass-through: yanantin
+        # owns the wording, Pukara owns the visibility. We catch
+        # ConnectionError, not Exception, so a bug in our own startup
+        # propagates raw rather than mislabeled "Backend startup failed".
+        logger.error("Backend startup failed [%s]: %s", type(exc).__name__, exc)
+        raise
     app.state.backend = backend
     logger.info("Pukara gateway ready")
     yield
