@@ -1659,6 +1659,7 @@ class TestMetaEndpoints:
         expected_keys = {
             "tensors", "edges", "corrections", "dissents",
             "negations", "bootstraps", "evolutions", "entities",
+            "records",
         }
         assert set(data.keys()) == expected_keys
         for key in expected_keys:
