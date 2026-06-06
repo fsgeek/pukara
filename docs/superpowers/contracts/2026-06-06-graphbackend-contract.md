@@ -75,10 +75,40 @@ verbatim. `RelationType` from `yanantin.apacheta.models.composition`.
 takes a bare `UUID` (per `get_record`), but `walk`/`link` use
 `"collection/<uuid>"` string refs. The id-shape seam (yanantin#10 SEAM 1)
 wants the *public* contract to be bare UUIDs with slash-form converted at
-the Arango boundary. This contract does not force that resolution — but
-whichever way you go, **`get` and `walk` must agree on id-shape at the
-Pukara route boundary**, because the gateway client presents one surface.
-State the chosen convention back so the Pukara routes and client match.
+the Arango boundary.
+
+**FINDING (Pukara, 2026-06-06 — read before resolving): bare-UUID-
+everywhere is WRONG against the data shape, and here is why.** The
+vertices Llika links/traverses are NOT in one collection —
+`_SEMANTIC_COLLECTIONS` (`arango.py:63`) holds `records`, `tensors`,
+`entities`, … and a `link` edge's `_from`/`_to` can cross collections
+(`tensors/<uuid>` → `records/<uuid>`). So a bare UUID into `link`/`walk`
+is **ambiguous**: the backend cannot qualify `<uuid>` → `<collection>/
+<uuid>` without knowing which collection the vertex lives in. `get` gets
+away with bare UUID only because `get_record` looks solely in `records`
+(`arango.py:308`). The graph verbs cannot.
+
+Therefore the honest resolution is **MIXED, per-verb** (the ambiguity is
+per-verb):
+- `get` → bare `UUID` (records-only, unambiguous).
+- `link` / `walk` / `neighbors` → `"collection/<uuid>"` slash-form
+  (cross-collection, the qualifier is intrinsic to the ref).
+
+**This was NOT pinned unilaterally** because it has a cross-repo cost the
+Pukara instance could not see: yanantin#10 SEAM 1 says Hamut'ay's
+`tool_recall` parses bare `UUID(...)` and RAISES on slash-form. Resolving
+mixed-shape means Hamut'ay must either (a) only ever address records via
+`get` (bare, fine), or (b) learn to handle slash-form for graph refs. The
+deciding fact — does Hamut'ay's traversal need cross-collection edge refs,
+or is it records-only? — was not visible to the Pukara hand. **Resolve as
+mixed-shape UNLESS Hamut'ay's needs are known to be records-only, in which
+case bare-UUID-everywhere becomes safe.** Whatever you pick, `get` and
+`walk` must present a coherent surface and the gateway client must match.
+State the chosen convention back.
+
+NOTE: the current Pukara `routes/llika.py` types `from_ref`/`start_id` as
+`str` (slash-form), consistent with the mixed resolution above. If the
+decision lands on bare-UUID-everywhere, the routes change too.
 
 ---
 
